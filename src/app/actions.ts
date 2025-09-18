@@ -70,6 +70,8 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
     }
 
     const jsonResponse: WebhookResponse | { error: string } | undefined = await response.json();
+    
+    console.log('Webhook response:', JSON.stringify(jsonResponse, null, 2));
 
     if (!jsonResponse) {
         return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
@@ -85,6 +87,7 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
     }
 
     const menuItems = jsonResponse[0].output.data.menuItems;
+    
 
     if (!menuItems || menuItems.length === 0) {
         return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
