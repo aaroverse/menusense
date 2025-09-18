@@ -2,7 +2,7 @@
 
 import type { ClientMenuItem } from '@/lib/definitions';
 
-// The new expected structure from the webhook
+// The expected structure from the webhook
 type WebhookMenuItem = {
   originalName: string;
   translatedName: string;
@@ -26,7 +26,7 @@ export type ActionResult = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
 const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook-test/afb1492e-cda4-44d5-9906-f91d7525d003';
-const REQUEST_TIMEOUT = 10000; // 10 seconds
+const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 export async function processMenuImage(formData: FormData): Promise<ActionResult> {
   const file = formData.get('menuImage') as File | null;
@@ -62,13 +62,13 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
         if (response.status >= 400 && response.status < 500) {
             return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
         }
-      return { error: 'Oops! Something went wrong. Please check your connection and try again.' };
+      return { error: 'Oops! Something went wrong on our end. Please check your connection and try again.' };
     }
 
     const jsonResponse: WebhookResponse | { error: string } | undefined = await response.json();
 
     if (!jsonResponse) {
-        return { error: "We couldn't seem to find any dishes in that photo. Please ensure the menu text is visible." };
+        return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
     }
 
     if ('error' in jsonResponse) {
