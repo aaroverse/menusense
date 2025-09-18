@@ -26,6 +26,7 @@ export type ActionResult = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
 const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook-test/afb1492e-cda4-44d5-9906-f91d7525d003';
+const REQUEST_TIMEOUT = 10000; // 10 seconds
 
 export async function processMenuImage(formData: FormData): Promise<ActionResult> {
   const file = formData.get('menuImage') as File | null;
@@ -45,11 +46,17 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   const body = new FormData();
   body.append('file', file);
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
   try {
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
       body: body,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
         if (response.status >= 400 && response.status < 500) {
@@ -82,7 +89,11 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
     }));
 
     return { data: clientData };
-  } catch (e) {
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') {
+      return { error: 'The request took too long. Please try again with a smaller image or better connection.' };
+    }
     console.error(e);
     return { error: 'Oops! Something went wrong. Please check your connection and try again.' };
   }
