@@ -2,12 +2,21 @@
 
 import type { ClientMenuItem } from '@/lib/definitions';
 
+// The new expected structure from the webhook
 type WebhookMenuItem = {
-  item: string;
-  translated_item: string;
+  originalName: string;
+  translatedName: string;
   description: string;
-  recommendation_reason?: string;
+  isRecommended: boolean;
 };
+
+type WebhookResponse = {
+  output: {
+    data: {
+      menuItems: WebhookMenuItem[];
+    };
+  };
+}[];
 
 export type ActionResult = {
   data?: ClientMenuItem[];
@@ -49,7 +58,7 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
       return { error: 'Oops! Something went wrong. Please check your connection and try again.' };
     }
 
-    const jsonResponse: WebhookMenuItem[] | { error: string } | undefined = await response.json();
+    const jsonResponse: WebhookResponse | { error: string } | undefined = await response.json();
 
     if (!jsonResponse) {
         return { error: "We couldn't seem to find any dishes in that photo. Please ensure the menu text is visible." };
@@ -59,15 +68,17 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
       return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
     }
 
-    if (!Array.isArray(jsonResponse) || jsonResponse.length === 0) {
+    if (!Array.isArray(jsonResponse) || jsonResponse.length === 0 || !jsonResponse[0].output?.data?.menuItems) {
       return { data: [] };
     }
 
-    const clientData: ClientMenuItem[] = jsonResponse.map((item) => ({
-      originalName: item.item,
-      translatedName: item.translated_item,
+    const menuItems = jsonResponse[0].output.data.menuItems;
+
+    const clientData: ClientMenuItem[] = menuItems.map((item) => ({
+      originalName: item.originalName,
+      translatedName: item.translatedName,
       description: item.description,
-      isRecommended: !!item.recommendation_reason,
+      isRecommended: item.isRecommended,
     }));
 
     return { data: clientData };
