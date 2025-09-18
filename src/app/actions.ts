@@ -76,7 +76,7 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
     }
 
     if (!Array.isArray(jsonResponse) || jsonResponse.length === 0 || !jsonResponse[0].output?.data?.menuItems) {
-      return { data: [] };
+      return { error: "We couldn't find any dishes in the response. Please ensure the menu text is visible." };
     }
 
     const menuItems = jsonResponse[0].output.data.menuItems;
