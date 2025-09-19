@@ -13,6 +13,8 @@ type AppState = 'ready' | 'processing' | 'result' | 'error';
 export default function HomePage() {
   const [state, setState] = useState<AppState>('ready');
   const [result, setResult] = useState<ActionResult>({});
+  const [filePreview, setFilePreview] = useState<File | null>(null);
+
 
   const handleFormAction = async (formData: FormData) => {
     setState('processing');
@@ -36,6 +38,7 @@ export default function HomePage() {
   const resetState = () => {
     setState('ready');
     setResult({});
+    setFilePreview(null);
   };
 
   const renderContent = () => {
