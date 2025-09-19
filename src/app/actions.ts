@@ -23,7 +23,8 @@ export type ActionResult = {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
-const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook/afb1492e-cda4-44d5-9906-f91d7525d003';
+// The WEBHOOK_URL now points to our internal proxy.
+const PROXY_URL = '/api/proxyWebhook';
 const REQUEST_TIMEOUT = 90000; // 90 seconds
 
 export async function processMenuImage(formData: FormData): Promise<ActionResult> {
@@ -45,63 +46,53 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
   try {
-    // Re-create FormData on the server to ensure correct field name 'file' for the webhook.
-    // This is the most reliable way to handle file uploads from different browsers/devices.
-    const webhookFormData = new FormData();
-    webhookFormData.append('file', file);
+    // We get the absolute URL for the proxy endpoint to make the fetch call from the server action.
+    // process.env.NEXT_PUBLIC_URL will need to be set in your environment.
+    // For Firebase Hosting, this is often automatically set.
+    const host = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002';
+    const proxyEndpoint = new URL(PROXY_URL, host).toString();
 
-    const response = await fetch(WEBHOOK_URL, {
+
+    const response = await fetch(proxyEndpoint, {
       method: 'POST',
-      body: webhookFormData, // Send the newly created FormData
+      body: formData, // Send the original FormData
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-        // Handle non-2xx responses
         const errorBody = await response.text();
-        console.error(`Webhook error response (status ${response.status}): ${errorBody}`);
-        if (response.status >= 400 && response.status < 500) {
+        console.error(`Proxy error response (status ${response.status}): ${errorBody}`);
+        try {
+            const errorJson = JSON.parse(errorBody);
+            return { error: errorJson.error || 'An unexpected error occurred with the proxy.' };
+        } catch (e) {
             return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
         }
-        return { error: 'Oops! Something went wrong on our end. Please check your connection and try again.' };
     }
 
-    const jsonResponse: WebhookResponse | { error: string } = await response.json();
+    const jsonResponse: { data?: ClientMenuItem[], error?: string } = await response.json();
     
-    console.log('Webhook response:', JSON.stringify(jsonResponse, null, 2));
+    console.log('Proxy response:', JSON.stringify(jsonResponse, null, 2));
 
-    if (!jsonResponse || typeof jsonResponse !== 'object') {
-        return { error: "We received an invalid response from our server. Please try again." };
+    if (jsonResponse.error) {
+      return { error: jsonResponse.error };
     }
 
-    if ('error' in jsonResponse) {
-      return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
-    }
-
-    if (!('output' in jsonResponse) || !Array.isArray(jsonResponse.output) || jsonResponse.output.length === 0) {
-      console.error('Invalid or empty menu items in webhook response:', jsonResponse);
+    if (!jsonResponse.data || jsonResponse.data.length === 0) {
+      console.error('Invalid or empty menu items from proxy:', jsonResponse);
       return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
     }
 
-    const menuItems = jsonResponse.output;
-
-    const clientData: ClientMenuItem[] = menuItems.map((item) => ({
-      originalName: item.originalName,
-      translatedName: item.translatedName,
-      description: item.description,
-      isRecommended: item.isRecommended,
-    }));
-
-    return { data: clientData };
+    return { data: jsonResponse.data };
   } catch (e: any) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      console.error('Request timed out');
+      console.error('Request to proxy timed out');
       return { error: 'The request took too long and timed out. Please try again with a smaller image or better connection.' };
     }
-    console.error('Error in processMenuImage:', e);
+    console.error('Error in processMenuImage calling proxy:', e);
     return { error: 'Oops! Something went wrong. Please check your connection and try again.' };
   }
 }
