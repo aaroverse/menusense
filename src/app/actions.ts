@@ -24,7 +24,7 @@ export type ActionResult = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
 const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook/afb1492e-cda4-44d5-9906-f91d7525d003';
-const REQUEST_TIMEOUT = 30000; // 30 seconds
+const REQUEST_TIMEOUT = 90000; // 90 seconds
 
 export async function processMenuImage(formData: FormData): Promise<ActionResult> {
   const file = formData.get('menuImage') as File | null;
