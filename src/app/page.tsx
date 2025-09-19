@@ -38,18 +38,26 @@ export default function HomePage() {
     setResult({});
   };
 
+  const renderContent = () => {
+    switch (state) {
+      case 'ready':
+        return <ReadyView action={handleFormAction} />;
+      case 'processing':
+        return <ProcessingView />;
+      case 'result':
+        return <ResultView items={result.data!} onReset={resetState} />;
+      case 'error':
+        return <ErrorView message={result.error!} onReset={resetState} />;
+      default:
+        return <ReadyView action={handleFormAction} />;
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
         <div className="w-full max-w-2xl animate-in fade-in-50 duration-500">
-          {state === 'ready' && <ReadyView action={handleFormAction} />}
-          {state === 'processing' && <ProcessingView />}
-          {state === 'error' && (
-            <ErrorView message={result.error!} onReset={resetState} />
-          )}
-          {state === 'result' && (
-            <ResultView items={result.data!} onReset={resetState} />
-          )}
+          {renderContent()}
         </div>
       </main>
       <footer className="w-full py-4 px-8 text-center">

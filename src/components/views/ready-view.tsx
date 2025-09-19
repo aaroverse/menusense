@@ -97,10 +97,12 @@ export function ReadyView({
   action: (formData: FormData) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const formAction = (formData: FormData) => {
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!file) {
       toast({
         title: 'No file selected',
@@ -109,6 +111,7 @@ export function ReadyView({
       });
       return;
     }
+    const formData = new FormData(event.currentTarget);
     action(formData);
   };
 
@@ -124,7 +127,7 @@ export function ReadyView({
         Snap a photo of any menu to get instant translations and dish
         descriptions.
       </p>
-      <form action={formAction} className="space-y-4">
+      <form ref={formRef} onSubmit={handleFormSubmit} className="space-y-4">
         <FormContent file={file} setFile={setFile} inputRef={inputRef} />
       </form>
     </div>
