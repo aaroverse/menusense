@@ -45,9 +45,13 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
   try {
+    // Re-create FormData on the server to ensure correct field name 'file'
+    const webhookFormData = new FormData();
+    webhookFormData.append('file', file);
+
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
-      body: formData, // Directly forward the original FormData
+      body: webhookFormData, // Send the newly created FormData
       signal: controller.signal,
     });
 
