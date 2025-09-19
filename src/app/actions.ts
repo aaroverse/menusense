@@ -38,11 +38,8 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   }
 
   if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-     return { error: 'Invalid file type. Please upload a JPG, PNG, or HEIC file.' };
+     return { error: `Invalid file type. Please upload a JPG, PNG, or HEIC file. Detected type: ${file.type}` };
   }
-
-  const body = new FormData();
-  body.append('file', file);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
@@ -50,47 +47,40 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   try {
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
-      body: body,
+      body: formData, // Directly forward the original FormData
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+        // Handle non-2xx responses
+        const errorBody = await response.text();
+        console.error(`Webhook error response (status ${response.status}): ${errorBody}`);
         if (response.status >= 400 && response.status < 500) {
-            const errorBody = await response.text();
-            console.error(`Client error response: ${errorBody}`);
             return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
         }
-        const errorBody = await response.text();
-        console.error(`Server error response: ${errorBody}`);
         return { error: 'Oops! Something went wrong on our end. Please check your connection and try again.' };
     }
 
-    const jsonResponse: WebhookResponse | { error: string } | undefined = await response.json();
+    const jsonResponse: WebhookResponse | { error: string } = await response.json();
     
     console.log('Webhook response:', JSON.stringify(jsonResponse, null, 2));
 
-    if (!jsonResponse) {
-        return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
+    if (!jsonResponse || typeof jsonResponse !== 'object') {
+        return { error: "We received an invalid response from our server. Please try again." };
     }
 
     if ('error' in jsonResponse) {
       return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
     }
 
-    if (!('output' in jsonResponse) || !Array.isArray(jsonResponse.output)) {
-      console.error('Invalid JSON structure received from webhook:', jsonResponse);
-      return { error: "We couldn't find any dishes in the response. Please ensure the menu text is visible." };
-      
+    if (!('output' in jsonResponse) || !Array.isArray(jsonResponse.output) || jsonResponse.output.length === 0) {
+      console.error('Invalid or empty menu items in webhook response:', jsonResponse);
+      return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
     }
 
     const menuItems = jsonResponse.output;
-    
-
-    if (!menuItems || menuItems.length === 0) {
-        return { error: "We couldn't find any dishes in that photo. Please ensure the menu text is visible." };
-    }
 
     const clientData: ClientMenuItem[] = menuItems.map((item) => ({
       originalName: item.originalName,
@@ -103,7 +93,8 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   } catch (e: any) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      return { error: 'The request took too long. Please try again with a smaller image or better connection.' };
+      console.error('Request timed out');
+      return { error: 'The request took too long and timed out. Please try again with a smaller image or better connection.' };
     }
     console.error('Error in processMenuImage:', e);
     return { error: 'Oops! Something went wrong. Please check your connection and try again.' };
