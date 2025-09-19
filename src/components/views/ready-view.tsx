@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { Upload, FileText, X, Loader2 } from 'lucide-react';
+import { useRef } from 'react';
+import { Upload, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { useFormStatus } from 'react-dom';
 
 interface ReadyViewProps {
   onSubmit: () => void;
@@ -12,9 +13,24 @@ interface ReadyViewProps {
   file: File | null;
 }
 
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      size="lg"
+      className="w-full mt-4"
+      disabled={pending}
+    >
+      Decode Menu
+    </Button>
+  );
+}
+
+
 export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -29,13 +45,10 @@ export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
     }
   };
   
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!file) return;
-
-    setIsSubmitting(true);
-    await onSubmit();
-    // No need to set isSubmitting back to false, as the view will change.
+    onSubmit();
   };
 
   return (
@@ -95,17 +108,15 @@ export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
             accept="image/png, image/jpeg, image/heic, image/heif"
             ref={inputRef}
             required
-            disabled={isSubmitting}
           />
         </label>
         <Button
           type="submit"
           size="lg"
           className="w-full mt-4"
-          disabled={!file || isSubmitting}
+          disabled={!file}
         >
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? 'Analyzing...' : 'Decode Menu'}
+          Decode Menu
         </Button>
       </form>
     </div>

@@ -45,7 +45,8 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
   try {
-    // Re-create FormData on the server to ensure correct field name 'file'
+    // Re-create FormData on the server to ensure correct field name 'file' for the webhook.
+    // This is the most reliable way to handle file uploads from different browsers/devices.
     const webhookFormData = new FormData();
     webhookFormData.append('file', file);
 
