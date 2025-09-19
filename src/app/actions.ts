@@ -10,13 +10,11 @@ type WebhookMenuItem = {
   isRecommended: boolean;
 };
 
+// The new expected webhook response structure
 type WebhookResponse = {
-  output: {
-    data: {
-      menuItems: WebhookMenuItem[];
-    };
-  };
-}[];
+  output: WebhookMenuItem[];
+};
+
 
 export type ActionResult = {
   data?: ClientMenuItem[];
@@ -81,12 +79,13 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
       return { error: "Sorry, we couldn't read this menu. Please try a clearer, well-lit photo." };
     }
 
-    if (!Array.isArray(jsonResponse) || jsonResponse.length === 0 || !jsonResponse[0].output?.data?.menuItems) {
+    if (!('output' in jsonResponse) || !Array.isArray(jsonResponse.output)) {
       console.error('Invalid JSON structure received from webhook:', jsonResponse);
       return { error: "We couldn't find any dishes in the response. Please ensure the menu text is visible." };
+      
     }
 
-    const menuItems = jsonResponse[0].output.data.menuItems;
+    const menuItems = jsonResponse.output;
     
 
     if (!menuItems || menuItems.length === 0) {
