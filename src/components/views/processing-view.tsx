@@ -23,12 +23,12 @@ export function ProcessingView() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center text-center p-8 bg-card rounded-lg"
+      className="flex flex-col items-center justify-center text-center p-8 bg-card rounded-lg min-h-[16rem]"
       role="status"
       aria-live="polite"
     >
       <Loader2 className="w-12 h-12 mb-4 text-primary animate-spin" />
-      <h2 className="text-2xl font-semibold text-foreground h-8">
+      <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
         {messages[currentMessageIndex]}
       </h2>
       <p className="mt-2 text-muted-foreground">
