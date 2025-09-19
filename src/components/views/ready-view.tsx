@@ -1,48 +1,41 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useFormStatus } from 'react-dom';
-import { Upload, FileText, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Upload, FileText, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
-function SubmitButton({ file }: { file: File | null }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      size="lg"
-      className="w-full mt-4"
-      disabled={!file || pending}
-    >
-      {pending ? 'Analyzing...' : 'Decode Menu'}
-    </Button>
-  );
+interface ReadyViewProps {
+  onSubmit: () => void;
+  onFileChange: (file: File | null) => void;
+  file: File | null;
 }
 
-export function ReadyView({
-  action,
-}: {
-  action: (formData: FormData) => void;
-}) {
-  const [file, setFile] = useState<File | null>(null);
+export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-    }
+    onFileChange(selectedFile || null);
   };
 
   const handleRemoveFile = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setFile(null);
+    onFileChange(null);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+  };
+  
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!file) return;
+
+    setIsSubmitting(true);
+    await onSubmit();
+    // No need to set isSubmitting back to false, as the view will change.
   };
 
   return (
@@ -57,7 +50,7 @@ export function ReadyView({
         Snap a photo of any menu to get instant translations and dish
         descriptions.
       </p>
-      <form action={action} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <label
           htmlFor="menu-upload"
           className={cn(
@@ -102,9 +95,18 @@ export function ReadyView({
             accept="image/png, image/jpeg, image/heic, image/heif"
             ref={inputRef}
             required
+            disabled={isSubmitting}
           />
         </label>
-        <SubmitButton file={file} />
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full mt-4"
+          disabled={!file || isSubmitting}
+        >
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting ? 'Analyzing...' : 'Decode Menu'}
+        </Button>
       </form>
     </div>
   );

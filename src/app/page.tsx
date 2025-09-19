@@ -13,11 +13,20 @@ type AppState = 'ready' | 'processing' | 'result' | 'error';
 export default function HomePage() {
   const [state, setState] = useState<AppState>('ready');
   const [result, setResult] = useState<ActionResult>({});
-  const [filePreview, setFilePreview] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
+  const handleFileChange = (newFile: File | null) => {
+    setFile(newFile);
+  };
 
-  const handleFormAction = async (formData: FormData) => {
+  const handleFormSubmit = async () => {
+    if (!file) return;
+
     setState('processing');
+
+    const formData = new FormData();
+    formData.append('menuImage', file);
+
     const response = await processMenuImage(formData);
 
     if (response.error) {
@@ -38,13 +47,19 @@ export default function HomePage() {
   const resetState = () => {
     setState('ready');
     setResult({});
-    setFilePreview(null);
+    setFile(null);
   };
 
   const renderContent = () => {
     switch (state) {
       case 'ready':
-        return <ReadyView action={handleFormAction} />;
+        return (
+          <ReadyView
+            onSubmit={handleFormSubmit}
+            onFileChange={handleFileChange}
+            file={file}
+          />
+        );
       case 'processing':
         return <ProcessingView />;
       case 'result':
@@ -52,7 +67,13 @@ export default function HomePage() {
       case 'error':
         return <ErrorView message={result.error!} onReset={resetState} />;
       default:
-        return <ReadyView action={handleFormAction} />;
+        return (
+          <ReadyView
+            onSubmit={handleFormSubmit}
+            onFileChange={handleFileChange}
+            file={file}
+          />
+        );
     }
   };
 
