@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook/afb1492e-cda4-44d5-9906-f91d7525d003';
+const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook/afb1492e-cda4-44d5-9906-f91d7525d003'; // Production
+// const WEBHOOK_URL = 'http://srv858154.hstgr.cloud:5678/webhook-test/afb1492e-cda4-44d5-9906-f91d7525d003'; // Test
 const REQUEST_TIMEOUT = 85000; // Slightly less than the client-side timeout
 
 // The expected structure from the webhook
