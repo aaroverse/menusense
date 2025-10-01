@@ -38,9 +38,7 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
     return { error: 'File is too large. Maximum size is 10MB.' };
   }
 
-  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-     return { error: `Invalid file type. Please upload a JPG, PNG, or HEIC file. Detected type: ${file.type}` };
-  }
+  
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
