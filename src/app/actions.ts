@@ -49,7 +49,7 @@ export async function processMenuImage(formData: FormData): Promise<ActionResult
     // We get the absolute URL for the proxy endpoint to make the fetch call from the server action.
     // process.env.NEXT_PUBLIC_URL will need to be set in your environment.
     // For Firebase Hosting, this is often automatically set.
-    const host = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002';
+    const host = process.env.URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002');
     const proxyEndpoint = new URL(PROXY_URL, host).toString();
 
 
