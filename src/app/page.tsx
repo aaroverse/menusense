@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import heic2any from 'heic2any';
 import type { ActionResult } from '@/app/actions';
 import { processMenuImage } from '@/app/actions';
 import { ReadyView } from '@/components/views/ready-view';
@@ -19,27 +20,48 @@ export default function HomePage() {
     setFile(newFile);
   };
 
+  import heic2any from 'heic2any';
+
+// ... (rest of the imports)
+
+// ... (component definition)
+
   const handleFormSubmit = async () => {
     if (!file) return;
 
     setState('processing');
 
-    const formData = new FormData();
-    formData.append('menuImage', file);
+    try {
+      let fileToProcess = file;
+      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
 
-    const response = await processMenuImage(formData);
+      if (isHeic) {
+        const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
+        const finalBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        fileToProcess = new File([finalBlob], "converted.jpeg", { type: 'image/jpeg' });
+      }
 
-    if (response.error) {
-      setResult({ error: response.error });
-      setState('error');
-    } else if (response.data && response.data.length > 0) {
-      setResult({ data: response.data });
-      setState('result');
-    } else {
-      setResult({
-        error:
-          "We couldn't find any dishes in that photo. Please ensure the menu text is visible.",
-      });
+      const formData = new FormData();
+      formData.append('menuImage', fileToProcess);
+
+      const response = await processMenuImage(formData);
+
+      if (response.error) {
+        setResult({ error: response.error });
+        setState('error');
+      } else if (response.data && response.data.length > 0) {
+        setResult({ data: response.data });
+        setState('result');
+      } else {
+        setResult({
+          error:
+            "We couldn't find any dishes in that photo. Please ensure the menu text is visible.",
+        });
+        setState('error');
+      }
+    } catch (e) {
+      console.error('Error during file conversion or processing:', e);
+      setResult({ error: 'There was a problem processing your image. Please try a different one.' });
       setState('error');
     }
   };
