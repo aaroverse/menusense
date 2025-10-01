@@ -1,35 +1,33 @@
 'use client';
 
 import { useRef } from 'react';
-import { Upload, FileText, X } from 'lucide-react';
+import { Upload, FileText, X, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { useFormStatus } from 'react-dom';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface ReadyViewProps {
   onSubmit: () => void;
   onFileChange: (file: File | null) => void;
   file: File | null;
+  language: string;
+  onLanguageChange: (language: string) => void;
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      size="lg"
-      className="w-full mt-4"
-      disabled={pending}
-    >
-      Decode Menu
-    </Button>
-  );
-}
-
-
-export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
+export function ReadyView({ onSubmit, onFileChange, file, language, onLanguageChange }: ReadyViewProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +48,8 @@ export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
     if (!file) return;
     onSubmit();
   };
+
+  const languages = ['Chinese', 'English', 'Japanese', 'Korean'];
 
   return (
     <div className="text-center">
@@ -110,10 +110,37 @@ export function ReadyView({ onSubmit, onFileChange, file }: ReadyViewProps) {
             required
           />
         </label>
+
+        <Collapsible className="w-full text-left">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-center text-sm">
+              <ChevronsUpDown className="w-4 h-4 mr-2" />
+              Advanced Options
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="p-4 pt-2">
+            <div className="grid items-center gap-2">
+              <Label htmlFor="language-select">Translate to:</Label>
+              <Select value={language} onValueChange={onLanguageChange}>
+                <SelectTrigger id="language-select">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((lang) => (
+                    <SelectItem key={lang} value={lang}>
+                      {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         <Button
           type="submit"
           size="lg"
-          className="w-full mt-4"
+          className="w-full"
           disabled={!file}
         >
           Decode Menu

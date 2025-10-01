@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   try {
     const requestFormData = await request.formData();
     const file = requestFormData.get('menuImage') as File | null;
+    const targetLanguage = requestFormData.get('targetLanguage') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'No file found in the request.' }, { status: 400 });
@@ -31,6 +32,9 @@ export async function POST(request: Request) {
     // Create a new FormData and append the file with the key 'file' as expected by the webhook.
     const webhookFormData = new FormData();
     webhookFormData.append('file', file);
+    if (targetLanguage) {
+      webhookFormData.append('targetLanguage', targetLanguage);
+    }
 
     const webhookResponse = await fetch(WEBHOOK_URL, {
       method: 'POST',

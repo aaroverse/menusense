@@ -15,6 +15,7 @@ export default function HomePage() {
   const [state, setState] = useState<AppState>('ready');
   const [result, setResult] = useState<ActionResult>({});
   const [file, setFile] = useState<File | null>(null);
+  const [language, setLanguage] = useState('English');
 
   const handleFileChange = (newFile: File | null) => {
     setFile(newFile);
@@ -38,6 +39,7 @@ export default function HomePage() {
 
       const formData = new FormData();
       formData.append('menuImage', compressedFile, compressedFile.name);
+      formData.append('targetLanguage', language);
 
       const response = await processMenuImage(formData);
 
@@ -65,6 +67,7 @@ export default function HomePage() {
     setState('ready');
     setResult({});
     setFile(null);
+    setLanguage('English');
   };
 
   const renderContent = () => {
@@ -75,6 +78,8 @@ export default function HomePage() {
             onSubmit={handleFormSubmit}
             onFileChange={handleFileChange}
             file={file}
+            language={language}
+            onLanguageChange={setLanguage}
           />
         );
       case 'processing':
