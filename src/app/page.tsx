@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import imageCompression from 'browser-image-compression';
 import type { ActionResult } from '@/app/actions';
 import { processMenuImage } from '@/app/actions';
 import { ReadyView } from '@/components/views/ready-view';
@@ -25,18 +26,18 @@ export default function HomePage() {
     setState('processing');
 
     try {
-      let fileToProcess = file;
-      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      // Set compression options
+      const options = {
+        maxSizeMB: 0.95, // Max size in MB
+        maxWidthOrHeight: 1920, // Max width or height
+        useWebWorker: true,
+      };
 
-      if (isHeic) {
-        const heic2any = (await import('heic2any')).default;
-        const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
-        const finalBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-        fileToProcess = new File([finalBlob], "converted.jpeg", { type: 'image/jpeg' });
-      }
+      // Compress the image
+      const compressedFile = await imageCompression(file, options);
 
       const formData = new FormData();
-      formData.append('menuImage', fileToProcess);
+      formData.append('menuImage', compressedFile, compressedFile.name);
 
       const response = await processMenuImage(formData);
 
@@ -53,9 +54,9 @@ export default function HomePage() {
         });
         setState('error');
       }
-    } catch (e) {
-      console.error('Error during file conversion or processing:', e);
-      setResult({ error: 'There was a problem processing your image. Please try a different one.' });
+    } catch (error) {
+      console.error('Image compression or processing error:', error);
+      setResult({ error: 'There was an error compressing or processing your image. Please try again.' });
       setState('error');
     }
   };
