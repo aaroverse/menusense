@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import heic2any from 'heic2any';
 import type { ActionResult } from '@/app/actions';
 import { processMenuImage } from '@/app/actions';
 import { ReadyView } from '@/components/views/ready-view';
@@ -20,12 +19,6 @@ export default function HomePage() {
     setFile(newFile);
   };
 
-  import heic2any from 'heic2any';
-
-// ... (rest of the imports)
-
-// ... (component definition)
-
   const handleFormSubmit = async () => {
     if (!file) return;
 
@@ -36,6 +29,7 @@ export default function HomePage() {
       const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
 
       if (isHeic) {
+        const heic2any = (await import('heic2any')).default;
         const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
         const finalBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
         fileToProcess = new File([finalBlob], "converted.jpeg", { type: 'image/jpeg' });
